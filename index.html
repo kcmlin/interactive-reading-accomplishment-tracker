@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#faf9f6]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Reading Accomplishment Tracker - Personal Yearly Reading Shelf</title>
+    <!-- Tailwind CSS v3 via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fdfbf7',
+                            100: '#f6ebd9',
+                            200: '#edd5b3',
+                            300: '#e1b883',
+                            400: '#d39855',
+                            500: '#c57c35',
+                            600: '#aa6227',
+                            700: '#8e4b20',
+                            800: '#733b1b',
+                            900: '#5e3118',
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['Georgia', 'ui-serif', 'serif'],
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Premium Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- FontAwesome Vector Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .serif-title {
+            font-family: 'Playfair Display', serif;
+        }
+        /* Glassmorphism utility */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(229, 224, 216, 0.6);
+        }
+        /* Subtle custom active animations */
+        .glowing-medal {
+            filter: drop-shadow(0 0 10px rgba(217, 119, 6, 0.35));
+            animation: gentle-hover 3s ease-in-out infinite alternate;
+        }
+        @keyframes gentle-hover {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-4px); }
+        }
+    </style>
+</head>
+<body class="min-h-full flex flex-col text-stone-800 antialiased">
+
+    <!-- Premium Navigation Bar -->
+    <header class="bg-white/95 backdrop-blur border-b border-stone-200 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Brand logo and identity -->
+                <div class="flex items-center space-x-3.5 min-w-0">
+                    <div class="bg-gradient-to-tr from-brand-800 to-amber-500 text-white p-2 rounded-xl shadow-md flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-book-open text-lg"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <span class="text-sm sm:text-lg font-bold tracking-tight serif-title text-stone-900 block leading-none truncate">Interactive Reading Accomplishment Tracker</span>
+                        <span class="text-[10px] text-stone-500 font-medium">Your Annual Reading Voyage</span>
+                    </div>
+                </div>
+
+                <!-- Right-aligned action deck -->
+                <div class="flex items-center space-x-3">
+                    <!-- Backup options -->
+                    <button id="backupPanelToggle" class="p-2 text-stone-500 hover:text-stone-800 rounded-lg text-sm hover:bg-stone-50 transition-colors" title="Export/Import Library Backup">
+                        <i class="fa-solid fa-cloud-arrow-down text-base"></i>
+                    </button>
+                    <!-- Year drop-down -->
+                    <div class="relative">
+                        <select id="yearSelect" class="appearance-none bg-stone-100 border border-stone-200 text-stone-700 py-1.5 pl-3 pr-8 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer">
+                            <option value="2026">2026 Shelf</option>
+                            <option value="2025">2025 Shelf</option>
+                            <option value="2024">2024 Shelf</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-stone-500">
+                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                        </div>
+                    </div>
+
+                    <!-- Trigger New Book Modal -->
+                    <button id="addBookTriggerBtn" class="bg-brand-800 hover:bg-brand-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add Book</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Slide-down Backup Utility Deck (Hidden by Default) -->
+    <div id="backupPanel" class="bg-stone-100 border-b border-stone-200 hidden py-4 px-4 transition-all">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="text-center sm:text-left">
+                <h4 class="text-xs font-bold text-stone-900 uppercase tracking-wider">Local Backup & Portable Library Data</h4>
+                <p class="text-[11px] text-stone-500 mt-0.5">Maintain offline backups or migrate records directly between devices using standard JSON files.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="exportBackupBtn" class="bg-white hover:bg-stone-50 text-stone-700 border border-stone-200 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-download text-stone-500"></i>
+                    <span>Export JSON</span>
+                </button>
+                <label class="bg-white hover:bg-stone-50 text-stone-700 border border-stone-200 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm">
+                    <i class="fa-solid fa-upload text-stone-500"></i>
+                    <span>Import JSON</span>
+                    <input type="file" id="importBackupFile" accept=".json" class="hidden">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active State Ribbon -->
+    <div class="bg-[#f0ece3] border-b border-stone-200 py-2 px-4 text-center text-xs text-stone-700 font-medium">
+        <span><i class="fa-solid fa-folder-open mr-1.5 text-brand-600"></i>Active workspace: Native Offline storage mode enabled. Zero configuration required.</span>
+    </div>
+
+    <!-- Core App Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        <!-- Interactive Analytics Panel -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Statistical Tracking Widget -->
+            <div class="lg:col-span-8 bg-white border border-stone-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-stone-900 serif-title">Reading Milestones</h2>
+                            <p class="text-xs text-stone-500 mt-0.5">Visualize category quotas and yearly completion goal levels</p>
+                        </div>
+                        <!-- Adjustable Yearly Goal Counter -->
+                        <div class="bg-stone-50 px-3 py-2 rounded-xl flex items-center gap-3 border border-stone-200">
+                            <span class="text-xs text-stone-500 font-bold uppercase tracking-wide">Set Goal:</span>
+                            <div class="flex items-center gap-1.5">
+                                <input id="yearlyGoalInput" type="number" min="1" max="999" value="12" class="w-12 bg-transparent text-center font-bold text-stone-800 focus:outline-none focus:ring-1 focus:ring-brand-500 rounded border border-stone-200 px-0.5 text-sm" />
+                                <span class="text-xs text-stone-500">books</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Beautiful Fluid Progress Bar -->
+                    <div class="mb-8">
+                        <div class="flex justify-between text-xs text-stone-600 font-semibold mb-2">
+                            <span id="progressBarCountLabel">Completed: 0 of 12 books</span>
+                            <span id="progressBarPercentageLabel">0%</span>
+                        </div>
+                        <div class="w-full bg-stone-100 h-3.5 rounded-full overflow-hidden p-[2px] border border-stone-200">
+                            <div id="progressBarFill" class="bg-gradient-to-r from-brand-700 to-amber-500 h-full rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Counters Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-stone-50 p-4 rounded-xl border border-stone-100 flex flex-col justify-between">
+                        <span class="text-[10px] text-stone-400 font-extrabold uppercase tracking-widest block mb-1">Total Logged</span>
+                        <div class="flex items-baseline justify-between">
+                            <span id="statTotalCounter" class="text-3xl font-extrabold text-stone-900 serif-title">0</span>
+                            <i class="fa-solid fa-books text-stone-300 text-sm"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-amber-50/50 p-4 rounded-xl border border-amber-100/70 flex flex-col justify-between">
+                        <span class="text-[10px] text-amber-700 font-extrabold uppercase tracking-widest block mb-1">Favorites</span>
+                        <div class="flex items-baseline justify-between">
+                            <span id="statFavoritesCounter" class="text-3xl font-extrabold text-amber-900 serif-title">0</span>
+                            <i class="fa-solid fa-heart text-amber-500 text-sm"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100/70 flex flex-col justify-between">
+                        <span class="text-[10px] text-emerald-700 font-extrabold uppercase tracking-widest block mb-1">Complete</span>
+                        <div class="flex items-baseline justify-between">
+                            <span id="statCompletedCounter" class="text-3xl font-extrabold text-emerald-900 serif-title">0</span>
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100/70 flex flex-col justify-between">
+                        <span class="text-[10px] text-blue-700 font-extrabold uppercase tracking-widest block mb-1">In Progress</span>
+                        <div class="flex items-baseline justify-between">
+                            <span id="statInProgressCounter" class="text-3xl font-extrabold text-blue-900 serif-title">0</span>
+                            <i class="fa-solid fa-book-reader text-blue-500 text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reading Medals Shelf (Encouragement gamification) -->
+            <div class="lg:col-span-4 bg-white border border-stone-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="text-lg font-bold text-stone-900 serif-title">Achievements</h2>
+                        <span class="text-[10px] bg-amber-100 text-amber-800 font-extrabold px-2 py-0.5 rounded-md tracking-wider uppercase">Milestones</span>
+                    </div>
+                    <p class="text-xs text-stone-500 mb-6">Gain beautifully crafted medallions for every 5 completed books (including Favorites).</p>
+                </div>
+
+                <!-- Dynamic Medal Icons Grid -->
+                <div class="grid grid-cols-4 gap-3.5" id="medalsShelfContainer">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[11px] text-stone-400 font-semibold uppercase tracking-wider">Rank:</span>
+                        <span id="activeRankBadge" class="text-xs font-bold text-brand-700">Novice Scribe</span>
+                    </div>
+                    <span id="nextMedalHint" class="text-[11px] text-stone-500 font-semibold">0/5 completed books to next medal</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Shelf Control Deck (Filters, Searching, Actions) -->
+        <section class="space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                
+                <!-- Category Filters Tabs -->
+                <div class="flex flex-wrap gap-1 p-1 bg-stone-100 rounded-xl border border-stone-200" id="filterTabsContainer">
+                    <button data-filter="all" class="filter-tab px-3 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-stone-900 shadow-sm">
+                        All Books
+                    </button>
+                    <button data-filter="Favorite" class="filter-tab px-3 py-1.5 text-xs font-bold rounded-lg text-stone-600 hover:text-stone-900 transition-all">
+                        <i class="fa-solid fa-star text-amber-500 mr-1"></i>Favorite
+                    </button>
+                    <button data-filter="Complete" class="filter-tab px-3 py-1.5 text-xs font-bold rounded-lg text-stone-600 hover:text-stone-900 transition-all">
+                        <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i>Complete
+                    </button>
+                    <button data-filter="In-Progress" class="filter-tab px-3 py-1.5 text-xs font-bold rounded-lg text-stone-600 hover:text-stone-900 transition-all">
+                        <i class="fa-solid fa-book-reader text-blue-500 mr-1"></i>In-Progress
+                    </button>
+                    <button data-filter="Paused" class="filter-tab px-3 py-1.5 text-xs font-bold rounded-lg text-stone-600 hover:text-stone-900 transition-all">
+                        <i class="fa-solid fa-circle-pause text-stone-400 mr-1"></i>Paused
+                    </button>
+                </div>
+
+                <!-- Live Search Engine Box -->
+                <div class="relative w-full md:w-80">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </div>
+                    <input type="text" id="shelfSearchField" placeholder="Search title, author or personal notes..." class="w-full bg-white border border-stone-200 rounded-xl py-2 pl-9 pr-10 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all placeholder:text-stone-400">
+                    <button id="searchClearBtn" class="absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-stone-600 hidden">
+                        <i class="fa-solid fa-circle-xmark text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Shelf Grid of Books -->
+            <div id="booksGridContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Dynamically loaded custom Book Cards -->
+            </div>
+
+            <!-- Absolute Empty State Screen -->
+            <div id="emptyShelfScreen" class="hidden flex-col items-center justify-center py-20 px-4 bg-white rounded-2xl border border-stone-200 text-center space-y-4">
+                <div class="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center text-stone-400">
+                    <i class="fa-solid fa-book-bookmark text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-stone-900 serif-title">Your reading log is empty</h3>
+                    <p class="text-xs text-stone-500 max-w-sm mx-auto mt-1">Start cataloging your favorite literature. Upload cover graphics or use our premium AI features to construct stylized mock book covers!</p>
+                </div>
+                <button id="emptyStateTriggerBtn" class="bg-brand-800 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 mx-auto">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Log Your First Book</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- AI Core companion Panel (Generates personalized text or speech analysis) -->
+        <section class="bg-gradient-to-br from-stone-900 to-stone-950 text-stone-100 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden">
+            <div class="absolute right-0 bottom-0 opacity-[0.03] pointer-events-none translate-x-12 translate-y-12">
+                <i class="fa-solid fa-brain-circuit text-[240px]"></i>
+            </div>
+
+            <div class="max-w-2xl space-y-4 relative z-10">
+                <div class="inline-flex items-center gap-2 bg-amber-500/10 text-amber-300 border border-amber-500/20 px-3 py-1 rounded-full text-xs font-semibold">
+                    <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i>
+                    <span>AI Copilot Engine</span>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-extrabold serif-title tracking-tight text-white">Generate Personalized Reading Insights</h2>
+                <p class="text-xs md:text-sm text-stone-400 leading-relaxed">Let Gemini evaluate your books logs, assess your reading themes, suggest 5 personalized books you should read next, and generate full speech reports.</p>
+                
+                <div class="flex flex-wrap gap-3 pt-2">
+                    <button id="generateInsightsBtn" class="bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold px-5 py-2.5 rounded-xl text-xs transition-all shadow-md flex items-center gap-2">
+                        <span id="insightsBtnText">Analyze Current Shelf</span>
+                        <i class="fa-solid fa-sparkles"></i>
+                    </button>
+                    <button id="voiceSynthBtn" class="hidden bg-stone-800 hover:bg-stone-700 text-stone-100 font-bold px-4 py-2.5 rounded-xl text-xs transition-all border border-stone-700 flex items-center gap-2">
+                        <i class="fa-solid fa-volume-high"></i>
+                        <span>Listen to Analysis</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Deep Output insights block -->
+            <div id="aiAnalysisOutputContainer" class="hidden mt-8 pt-6 border-t border-stone-850 space-y-4 relative z-10">
+                <div class="bg-stone-850/60 backdrop-blur border border-stone-800 rounded-xl p-5 md:p-6 text-stone-300">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-stone-800">
+                        <div class="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wide">
+                            <i class="fa-solid fa-chart-line text-sm"></i>
+                            <span>Gemini Cognitive Report</span>
+                        </div>
+                        <button id="clearInsightsBtn" class="text-[11px] text-stone-500 hover:text-stone-300 transition-colors">
+                            <i class="fa-solid fa-trash-can mr-1"></i>Clear Report
+                        </button>
+                    </div>
+                    <!-- Analysis response output -->
+                    <div id="aiAnalysisBody" class="prose prose-invert text-stone-300 text-xs leading-relaxed max-w-none space-y-3.5">
+                        <!-- Filled dynamic -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal Form Component: Log / Alter Book Logs -->
+    <div id="bookModal" class="fixed inset-0 bg-stone-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh] transition-transform duration-300 transform scale-95">
+            <!-- Header bar -->
+            <div class="p-5 border-b border-stone-150 flex justify-between items-center bg-stone-50">
+                <div>
+                    <h3 id="modalTitle" class="text-lg font-bold text-stone-900 serif-title">Log a New Book</h3>
+                    <p class="text-[11px] text-stone-500 mt-0.5">Supports book details, author, and quotes in any global language</p>
+                </div>
+                <button id="closeBookModalBtn" class="w-8 h-8 rounded-xl bg-stone-200/50 hover:bg-stone-200 text-stone-600 transition-colors flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable input structure -->
+            <div class="p-6 overflow-y-auto space-y-5 flex-grow">
+                <form id="bookForm" class="space-y-4">
+                    <input type="hidden" id="bookIdHiddenField">
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="bookTitleInput" class="block text-[11px] font-extrabold text-stone-500 uppercase tracking-widest mb-1.5">Book Title <span class="text-red-500">*</span></label>
+                            <input type="text" id="bookTitleInput" required class="w-full bg-stone-50 border border-stone-200 rounded-lg p-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all placeholder:text-stone-400" placeholder="e.g. Cien años de soledad">
+                        </div>
+                        <div>
+                            <label for="bookAuthorInput" class="block text-[11px] font-extrabold text-stone-500 uppercase tracking-widest mb-1.5">Author <span class="text-red-500">*</span></label>
+                            <input type="text" id="bookAuthorInput" required class="w-full bg-stone-50 border border-stone-200 rounded-lg p-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all placeholder:text-stone-400" placeholder="Gabriel García Márquez">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Category Picker -->
+                        <div>
+                            <label for="bookCategoryInput" class="block text-[11px] font-extrabold text-stone-500 uppercase tracking-widest mb-1.5">Reading Status <span class="text-red-500">*</span></label>
+                            <select id="bookCategoryInput" required class="w-full bg-stone-50 border border-stone-200 rounded-lg p-2.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all text-stone-700 cursor-pointer">
+                                <option value="Favorite">Favorite ⭐️</option>
+                                <option value="Complete" selected>Complete ✅</option>
+                                <option value="In-Progress">In-Progress 📖</option>
+                                <option value="Paused">Paused ⏸️</option>
+                            </select>
+                        </div>
+                        <!-- Stars Component -->
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-stone-500 uppercase tracking-widest mb-1.5">Rating</label>
+                            <div class="flex items-center space-x-1 py-1" id="starsRatingSelectorContainer">
+                                <button type="button" data-val="1" class="star-interactive-btn text-stone-300 hover:scale-110 text-lg transition-transform focus:outline-none"><i class="fa-solid fa-star"></i></button>
+                                <button type="button" data-val="2" class="star-interactive-btn text-stone-300 hover:scale-110 text-lg transition-transform focus:outline-none"><i class="fa-solid fa-star"></i></button>
+                                <button type="button" data-val="3" class="star-interactive-btn text-stone-300 hover:scale-110 text-lg transition-transform focus:outline-none"><i class="fa-solid fa-star"></i></button>
+                                <button type="button" data-val="4" class="star-interactive-btn text-stone-300 hover:scale-110 text-lg transition-transform focus:outline-none"><i class="fa-solid fa-star"></i></button>
+                                <button type="button" data-val="5" class="star-interactive-btn text-stone-300 hover:scale-110 text-lg transition-transform focus:outline-none"><i class="fa-solid fa-star"></i></button>
+                            </div>
+                            <input type="hidden" id="bookRatingHiddenInput" value="0">
+                        </div>
+                    </div>
+
+                    <!-- Personal review/quote notes -->
+                    <div>
+                        <label for="bookNotesInput" class="block text-[11px] font-extrabold text-stone-500 uppercase tracking-widest mb-1.5">Quotes, Notes, or Reviews</label>
+                        <textarea id="bookNotesInput" rows="3" class="w-full bg-stone-50 border border-stone-200 rounded-lg p-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all placeholder:text-stone-400" placeholder="Type down your thoughts, inspiring expressions, or general impressions..."></textarea>
+                    </div>
+
+                    <!-- Book Cover Image Section -->
+                    <div class="border-t border-stone-100 pt-4 space-y-4">
+                        <label class="block text-[11px] font-extrabold text-stone-500 uppercase tracking-widest">Book Cover Art</label>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+                            <!-- Visual box showing live image preview -->
+                            <div class="md:col-span-4 flex justify-center">
+                                <div id="formCoverImagePreview" class="w-24 h-32 bg-stone-50 border border-stone-200 rounded-lg shadow-inner flex flex-col items-center justify-center text-center p-3 overflow-hidden relative">
+                                    <!-- Dynamic SVG fallback, uploaded graphic inside -->
+                                </div>
+                            </div>
+
+                            <!-- Source switcher choices -->
+                            <div class="md:col-span-8 space-y-3">
+                                <div class="flex gap-2">
+                                    <button type="button" id="setSourceUploadBtn" class="flex-1 py-1.5 px-3 text-xs font-bold rounded-lg border border-stone-200 hover:bg-stone-50 focus:outline-none bg-stone-100 text-stone-900 border-stone-300">
+                                        <i class="fa-solid fa-upload mr-1 text-stone-500"></i>Upload File
+                                    </button>
+                                    <button type="button" id="setSourceAIBtn" class="flex-1 py-1.5 px-3 text-xs font-bold rounded-lg border border-stone-200 hover:bg-stone-50 focus:outline-none">
+                                        <i class="fa-solid fa-wand-magic-sparkles mr-1 text-amber-500"></i>AI Cover
+                                    </button>
+                                </div>
+
+                                <!-- Local upload file pane -->
+                                <div id="uploadSourcePanel" class="space-y-1">
+                                    <label class="flex flex-col items-center justify-center w-full h-16 border-2 border-stone-200 border-dashed rounded-lg cursor-pointer bg-stone-50 hover:bg-stone-100/50 transition-all">
+                                        <div class="flex flex-col items-center justify-center text-center px-4">
+                                            <i class="fa-solid fa-cloud-arrow-up text-stone-400 text-sm mb-1"></i>
+                                            <p class="text-[10px] text-stone-500 font-bold">Select book cover photo</p>
+                                        </div>
+                                        <!-- Built-in compression and base64 parsing happens on change event -->
+                                        <input type="file" id="bookCoverFileInput" accept="image/*" class="hidden">
+                                    </label>
+                                </div>
+
+                                <!-- AI Cover input settings pane -->
+                                <div id="aiSourcePanel" class="hidden space-y-2">
+                                    <div class="flex gap-1.5">
+                                        <input type="text" id="aiCoverPromptField" class="flex-grow bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 placeholder:text-stone-400" placeholder="Optional art style e.g. 'Watercolor'">
+                                        <button type="button" id="triggerAICoverGenBtn" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 rounded-lg text-[10px] uppercase tracking-wider transition-colors flex items-center justify-center gap-1">
+                                            <span id="aiGenCoverBtnText">Generate</span>
+                                            <i class="fa-solid fa-sparkles"></i>
+                                        </button>
+                                    </div>
+                                    <p class="text-[9px] text-stone-400 leading-normal">Our system uses Imagen 4.0 to generate a custom book cover mockup based on your title and author names.</p>
+                                </div>
+
+                                <input type="hidden" id="bookCoverDataURL">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trigger deck -->
+                    <div class="border-t border-stone-100 pt-4 flex justify-end gap-2.5">
+                        <button type="button" id="cancelFormBtn" class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-4 py-2 rounded-xl text-xs font-bold transition-all">
+                            Cancel
+                        </button>
+                        <button type="submit" class="bg-brand-800 hover:bg-brand-700 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm">
+                            Save Log Entry
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal (Delete confirmation) -->
+    <div id="confirmDialog" class="fixed inset-0 bg-stone-950/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4 hidden transition-opacity duration-300 opacity-0">
+        <div class="bg-white rounded-2xl max-w-xs w-full shadow-2xl p-6 space-y-5 transition-transform duration-300 transform scale-95 text-center">
+            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-lg">
+                <i class="fa-solid fa-trash-can animate-bounce"></i>
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-stone-900 serif-title">Delete book entry?</h3>
+                <p class="text-xs text-stone-500 mt-2">This will permanently remove this record from your bookshelf.</p>
+            </div>
+            <div class="flex justify-center gap-2">
+                <button id="cancelConfirmBtn" class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-3.5 py-2 rounded-xl text-xs font-bold transition-all">
+                    Cancel
+                </button>
+                <button id="proceedConfirmBtn" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Embedded System Toast Alert Deck -->
+    <div id="toastNotificationHub" class="fixed bottom-5 right-5 z-[70] flex flex-col gap-2.5 pointer-events-none"></div>
+
+    <!-- Script Application Logic -->
+    <script>
+        // Core Constants & API Setup
+        const apiKey = ""; // Populated automatically at runtime, do not validate
+
+        // App States
+        let books = [];
+        let selectedYear = "2026";
+        let yearlyGoal = 12;
+        let activeFilter = "all";
+        let activeCoverSourceType = "upload";
+        let activeGeneratedReportValue = "";
+        let audioContext = null;
+
+        // Current item referenced inside modals
+        let bookIdPendingDeletion = null;
+
+        // Achievements Milestones Core Dataset
+        const ACH_MILESTONES = [
+            { limit: 1, title: "Seedling", badge: "Copper Scribe", icon: "fa-seedling", bg: "from-amber-600 to-amber-800 text-amber-50" },
+            { limit: 5, title: "Cozy Corner", badge: "Bronze Reader", icon: "fa-mug-hot", bg: "from-orange-500 to-amber-700 text-orange-50" },
+            { limit: 10, title: "Page Turner", badge: "Silver Scholar", icon: "fa-bookmark", bg: "from-stone-300 to-stone-500 text-stone-900" },
+            { limit: 15, title: "Book Devourer", badge: "Gold Scholar", icon: "fa-fire-flame-curved", bg: "from-yellow-400 to-amber-500 text-amber-950" },
+            { limit: 20, title: "Sage", badge: "Platinum Voyager", icon: "fa-compass", bg: "from-teal-300 to-cyan-500 text-slate-900" },
+            { limit: 25, title: "Ethereal", badge: "Emerald Seeker", icon: "fa-gem", bg: "from-emerald-400 to-teal-600 text-teal-950" },
+            { limit: 30, title: "Arch-Scholar", badge: "Ruby Sage", icon: "fa-graduation-cap", bg: "from-red-500 to-rose-700 text-rose-50" },
+            { limit: 35, title: "Curator", badge: "Legendary Curator", icon: "fa-crown", bg: "from-purple-500 to-indigo-700 text-purple-50" }
+        ];
+
+        // Safe client-side HTML renderer
+        function escapeHTML(str) {
+            return (str || '').replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        // Robust fetch wrapper with automatic exponential backoff
+        async function queryGeminiAPI(url, options, maxRetries = 5) {
+            let delay = 1000;
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                    if (response.status === 429 || response.status >= 500) {
+                        throw new Error(`Retrying due to status: ${response.status}`);
+                    }
+                    const text = await response.text();
+                    throw new Error(`API returned error status ${response.status}: ${text}`);
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2; // Exponential backoff scaling
+                }
+            }
+        }
+
+        // On Load Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            loadShelfState();
+            bindEvents();
+            renderShelfUI();
+            initAudioContextTrigger();
+        });
+
+        // Initialize Native Sound on user interaction to pass autoplay policies safely
+        function initAudioContextTrigger() {
+            document.body.addEventListener('click', () => {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }, { once: true });
+        }
+
+        function triggerAchievementChime() {
+            if (!audioContext) return;
+            try {
+                const osc = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                osc.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                osc.type = "sine";
+                // Melodious dual note harmony
+                const now = audioContext.currentTime;
+                osc.frequency.setValueAtTime(440, now); // A4
+                osc.frequency.setValueAtTime(554.37, now + 0.12); // C#5
+                osc.frequency.setValueAtTime(659.25, now + 0.24); // E5
+                osc.frequency.setValueAtTime(880, now + 0.36); // A5
+
+                gainNode.gain.setValueAtTime(0.12, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+
+                osc.start(now);
+                osc.stop(now + 0.9);
+            } catch (err) {
+                console.warn("Audio Context could not synthesize audio.", err);
+            }
+        }
+
+        // Load dataset from local storage safely
+        function loadShelfState() {
+            const stored = localStorage.getItem('aurabook_logs_local');
+            if (stored) {
+                try {
+                    books = JSON.parse(stored);
+                } catch (e) {
+                    books = getCoreSeedBooks();
+                }
+            } else {
+                books = getCoreSeedBooks();
+                saveShelfState();
+            }
+
+            const storedGoal = localStorage.getItem('aurabook_goal_local');
+            if (storedGoal) {
+                yearlyGoal = parseInt(storedGoal) || 12;
+                document.getElementById('yearlyGoalInput').value = yearlyGoal;
+            }
+        }
+
+        function saveShelfState() {
+            localStorage.setItem('aurabook_logs_local', JSON.stringify(books));
+        }
+
+        function getCoreSeedBooks() {
+            return [
+                { id: "seed-1", title: "Cien años de soledad", author: "Gabriel García Márquez", category: "Favorite", rating: 5, notes: "A masterclass in magical realism, generational patterns, and beautiful, haunting prose.", cover: "", year: "2026" },
+                { id: "seed-2", title: "Dune", author: "Frank Herbert", category: "In-Progress", rating: 0, notes: "Complex world-building and ecology structures. Fascinating political power dynamics.", cover: "", year: "2026" },
+                { id: "seed-3", title: "The Hobbit", author: "J.R.R. Tolkien", category: "Complete", rating: 4, notes: "An absolute delight. Bilbo Baggins is the best companion for a rainy day.", cover: "", year: "2026" }
+            ];
+        }
+
+        // Bind events strictly using Vanilla JS Event Listeners (No dynamic inline calls)
+        function bindEvents() {
+            // New Book Trigger buttons
+            document.getElementById('addBookTriggerBtn').addEventListener('click', openAddModal);
+            document.getElementById('emptyStateTriggerBtn').addEventListener('click', openAddModal);
+
+            // Year selector adjustment
+            document.getElementById('yearSelect').addEventListener('change', (e) => {
+                selectedYear = e.target.value;
+                renderShelfUI();
+                showSystemToast(`Switched view to ${selectedYear} Shelf`, "success");
+            });
+
+            // Adjust Goal Input
+            document.getElementById('yearlyGoalInput').addEventListener('input', (e) => {
+                const num = parseInt(e.target.value);
+                if (num && num > 0) {
+                    yearlyGoal = num;
+                    localStorage.setItem('aurabook_goal_local', num);
+                    renderShelfUI();
+                }
+            });
+
+            // Dialog Modals Closer controls
+            document.getElementById('closeBookModalBtn').addEventListener('click', closeBookModal);
+            document.getElementById('cancelFormBtn').addEventListener('click', closeBookModal);
+            document.getElementById('cancelConfirmBtn').addEventListener('click', closeConfirmModal);
+
+            // Form Submit mapping
+            document.getElementById('bookForm').addEventListener('submit', handleFormSubmit);
+
+            // Confirm Dialog trigger
+            document.getElementById('proceedConfirmBtn').addEventListener('click', executeBookDelete);
+
+            // Category Tab Clicks
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const btn = e.currentTarget;
+                    activeFilter = btn.getAttribute('data-filter');
+                    
+                    // Style updating
+                    document.querySelectorAll('.filter-tab').forEach(t => {
+                        t.className = "filter-tab px-3 py-1.5 text-xs font-bold rounded-lg text-stone-600 hover:text-stone-900 transition-all";
+                    });
+                    btn.className = "filter-tab px-3 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-stone-900 shadow-sm";
+                    
+                    renderShelfUI();
+                });
+            });
+
+            // Live Search Field Action
+            const searchField = document.getElementById('shelfSearchField');
+            const clearBtn = document.getElementById('searchClearBtn');
+            searchField.addEventListener('input', () => {
+                const term = searchField.value;
+                if (term.trim() !== "") {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+                renderShelfUI();
+            });
+            clearBtn.addEventListener('click', () => {
+                searchField.value = "";
+                clearBtn.classList.add('hidden');
+                renderShelfUI();
+            });
+
+            // Dynamic Modal Form Live Cover Auto-renderer
+            document.getElementById('bookTitleInput').addEventListener('input', triggerFormPreviewUpdate);
+            document.getElementById('bookAuthorInput').addEventListener('input', triggerFormPreviewUpdate);
+            document.getElementById('bookCategoryInput').addEventListener('change', triggerFormPreviewUpdate);
+
+            // Star selectors binding
+            document.querySelectorAll('.star-interactive-btn').forEach(star => {
+                star.addEventListener('click', (e) => {
+                    const r = parseInt(e.currentTarget.getAttribute('data-val'));
+                    updateStarSelectorDisplay(r);
+                });
+            });
+
+            // Backup Panel toggler
+            document.getElementById('backupPanelToggle').addEventListener('click', () => {
+                const p = document.getElementById('backupPanel');
+                p.classList.toggle('hidden');
+            });
+
+            // Export Library Trigger
+            document.getElementById('exportBackupBtn').addEventListener('click', exportLibraryJSON);
+
+            // Import File input Action
+            document.getElementById('importBackupFile').addEventListener('change', importLibraryJSON);
+
+            // Image Cover Upload change handler
+            document.getElementById('bookCoverFileInput').addEventListener('change', handleUploadChange);
+
+            // Source Switchers Inside Form
+            document.getElementById('setSourceUploadBtn').addEventListener('click', () => setSourcePane('upload'));
+            document.getElementById('setSourceAIBtn').addEventListener('click', () => setSourcePane('ai'));
+
+            // AI Cover art generator triggers
+            document.getElementById('triggerAICoverGenBtn').addEventListener('click', generateAICoverArt);
+
+            // AI Reading insights triggers
+            document.getElementById('generateInsightsBtn').addEventListener('click', renderAIInsightsReport);
+            document.getElementById('voiceSynthBtn').addEventListener('click', synthesizeReportSpeech);
+            document.getElementById('clearInsightsBtn').addEventListener('click', () => {
+                document.getElementById('aiAnalysisOutputContainer').classList.add('hidden');
+                document.getElementById('voiceSynthBtn').classList.add('hidden');
+                activeGeneratedReportValue = "";
+            });
+        }
+
+        // Star display controller
+        function updateStarSelectorDisplay(ratingValue) {
+            document.getElementById('bookRatingHiddenInput').value = ratingValue;
+            document.querySelectorAll('.star-interactive-btn').forEach(btn => {
+                const sIdx = parseInt(btn.getAttribute('data-val'));
+                if (sIdx <= ratingValue) {
+                    btn.className = "star-interactive-btn text-amber-500 hover:scale-110 text-lg transition-transform focus:outline-none";
+                } else {
+                    btn.className = "star-interactive-btn text-stone-300 hover:scale-110 text-lg transition-transform focus:outline-none";
+                }
+            });
+        }
+
+        // Tab selection wrapper inside book metadata modal
+        function setSourcePane(source) {
+            activeCoverSourceType = source;
+            const btnUpload = document.getElementById('setSourceUploadBtn');
+            const btnAI = document.getElementById('setSourceAIBtn');
+            const panelUpload = document.getElementById('uploadSourcePanel');
+            const panelAI = document.getElementById('aiSourcePanel');
+
+            if (source === 'upload') {
+                btnUpload.className = "flex-1 py-1.5 px-3 text-xs font-bold rounded-lg border hover:bg-stone-50 focus:outline-none bg-stone-100 text-stone-900 border-stone-300";
+                btnAI.className = "flex-1 py-1.5 px-3 text-xs font-bold rounded-lg border border-stone-200 hover:bg-stone-50 focus:outline-none";
+                panelUpload.classList.remove('hidden');
+                panelAI.classList.add('hidden');
+            } else {
+                btnAI.className = "flex-1 py-1.5 px-3 text-xs font-bold rounded-lg border hover:bg-stone-50 focus:outline-none bg-stone-100 text-stone-900 border-stone-300";
+                btnUpload.className = "flex-1 py-1.5 px-3 text-xs font-bold rounded-lg border border-stone-200 hover:bg-stone-50 focus:outline-none";
+                panelAI.classList.remove('hidden');
+                panelUpload.classList.add('hidden');
+            }
+        }
+
+        // Live Preview trigger inside Modal
+        function triggerFormPreviewUpdate() {
+            const rawCover = document.getElementById('bookCoverDataURL').value;
+            const container = document.getElementById('formCoverImagePreview');
+            
+            if (rawCover) {
+                container.innerHTML = `<img src="${rawCover}" class="w-full h-full object-cover rounded-md" alt="Preview art">`;
+            } else {
+                const title = document.getElementById('bookTitleInput').value || "Book Title";
+                const author = document.getElementById('bookAuthorInput').value || "Author";
+                const category = document.getElementById('bookCategoryInput').value;
+                container.innerHTML = generatePlaceholderSVG(title, author, category);
+            }
+        }
+
+        // Client-side image compress process (Ensures 100% total compatibility with localStorage limits)
+        function handleUploadChange(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    // Force compress images down to compact book aspect ratio ~240x320 at standard quality
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 240;
+                    canvas.height = 320;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 240, 320);
+                    
+                    // Compress JPEG data URL at 70% quality to output ultra-efficient storage size
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    document.getElementById('bookCoverDataURL').value = compressedBase64;
+                    triggerFormPreviewUpdate();
+                    showSystemToast("Book Cover image parsed and compressed!", "success");
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Call Imagen 4.0 API to generate premium customized cover mockups with robustness
+        async function generateAICoverArt() {
+            const title = document.getElementById('bookTitleInput').value.trim();
+            const author = document.getElementById('bookAuthorInput').value.trim();
+
+            if (!title) {
+                showSystemToast("Please enter a book title first to guide the art model.", "warning");
+                return;
+            }
+
+            const promptExtraStyle = document.getElementById('aiCoverPromptField').value.trim();
+            const fullPromptText = `Highly stylized book cover illustration for "${title}" by ${author}. Style profile: ${promptExtraStyle ? promptExtraStyle : 'Flat minimal vector art graphic design, rich colors, beautiful typographic design. Clean award-winning illustration style'}. High aesthetic detail.`;
+
+            const btnText = document.getElementById('aiGenCoverBtnText');
+            const originalHTML = btnText.innerHTML;
+            btnText.innerText = "Cooking...";
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+                const responseData = await queryGeminiAPI(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instances: [{ prompt: fullPromptText }],
+                        parameters: { sampleCount: 1, aspectRatio: "3:4" }
+                    })
+                });
+
+                if (responseData.predictions && responseData.predictions[0]) {
+                    const encodedBytes = responseData.predictions[0].bytesBase64Encoded;
+                    const cleanDataURL = `data:image/png;base64,${encodedBytes}`;
+                    
+                    // Save and render
+                    document.getElementById('bookCoverDataURL').value = cleanDataURL;
+                    triggerFormPreviewUpdate();
+                    showSystemToast("Premium AI book cover compiled successfully!", "success");
+                } else {
+                    throw new Error("No predictions found in response");
+                }
+            } catch (err) {
+                console.error("AI cover generation error: ", err);
+                showSystemToast("Could not contact Imagen API. Check console or configuration.", "error");
+            } finally {
+                btnText.innerHTML = originalHTML;
+            }
+        }
+
+        // Modal Action Creators
+        function openAddModal() {
+            document.getElementById('bookIdHiddenField').value = "";
+            document.getElementById('bookForm').reset();
+            updateStarSelectorDisplay(0);
+            document.getElementById('bookCoverDataURL').value = "";
+            document.getElementById('modalTitle').innerText = "Log a New Book";
+            setSourcePane('upload');
+            triggerFormPreviewUpdate();
+
+            const modal = document.getElementById('bookModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('.transform').classList.remove('scale-95');
+            }, 50);
+        }
+
+        function openEditModal(id) {
+            const b = books.find(book => book.id === id);
+            if (!b) return;
+
+            document.getElementById('bookIdHiddenField').value = b.id;
+            document.getElementById('bookTitleInput').value = b.title;
+            document.getElementById('bookAuthorInput').value = b.author;
+            document.getElementById('bookCategoryInput').value = b.category;
+            updateStarSelectorDisplay(b.rating || 0);
+            document.getElementById('bookNotesInput').value = b.notes || "";
+            document.getElementById('bookCoverDataURL').value = b.cover || "";
+
+            document.getElementById('modalTitle').innerText = "Edit Book Log Entry";
+            setSourcePane('upload');
+            triggerFormPreviewUpdate();
+
+            const modal = document.getElementById('bookModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('.transform').classList.remove('scale-95');
+            }, 50);
+        }
+
+        function closeBookModal() {
+            const modal = document.getElementById('bookModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('.transform').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 250);
+        }
+
+        // Submit form handler
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const bId = document.getElementById('bookIdHiddenField').value;
+            const title = document.getElementById('bookTitleInput').value.trim();
+            const author = document.getElementById('bookAuthorInput').value.trim();
+            const category = document.getElementById('bookCategoryInput').value;
+            const rating = parseInt(document.getElementById('bookRatingHiddenInput').value) || 0;
+            const notes = document.getElementById('bookNotesInput').value.trim();
+            const cover = document.getElementById('bookCoverDataURL').value;
+
+            const structuredData = {
+                title,
+                author,
+                category,
+                rating,
+                notes,
+                cover,
+                year: selectedYear
+            };
+
+            if (bId) {
+                // Update existent
+                const index = books.findIndex(x => x.id === bId);
+                if (index !== -1) {
+                    books[index] = { ...books[index], ...structuredData };
+                    showSystemToast(`Successfully updated "${title}"!`, "success");
+                }
+            } else {
+                // Create new log entry
+                const newItem = {
+                    id: `local-book-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                    ...structuredData
+                };
+                books.push(newItem);
+                showSystemToast(`Successfully logged "${title}"!`, "success");
+            }
+
+            saveShelfState();
+            closeBookModal();
+            renderShelfUI();
+        }
+
+        // Deletion action workflows
+        function triggerDeletePrompt(id) {
+            bookIdPendingDeletion = id;
+            const d = document.getElementById('confirmDialog');
+            d.classList.remove('hidden');
+            setTimeout(() => {
+                d.classList.remove('opacity-0');
+                d.querySelector('.transform').classList.remove('scale-95');
+            }, 50);
+        }
+
+        function closeConfirmModal() {
+            const d = document.getElementById('confirmDialog');
+            d.classList.add('opacity-0');
+            d.querySelector('.transform').classList.add('scale-95');
+            setTimeout(() => {
+                d.classList.add('hidden');
+                bookIdPendingDeletion = null;
+            }, 250);
+        }
+
+        function executeBookDelete() {
+            if (!bookIdPendingDeletion) return;
+            
+            books = books.filter(b => b.id !== bookIdPendingDeletion);
+            saveShelfState();
+            closeConfirmModal();
+            renderShelfUI();
+            showSystemToast("Book entry successfully deleted.", "info");
+        }
+
+        // Dynamic visual component builders
+        function generatePlaceholderSVG(title, author, category) {
+            let baseHue = 24; // Warm classic leather brown
+            if (category === "Favorite") baseHue = 42; // Rich Gold
+            if (category === "In-Progress") baseHue = 202; // Electric blue
+            if (category === "Paused") baseHue = 340; // Soft burgundy
+
+            const labelCode = title ? title.slice(0, 2).toUpperCase() : "BK";
+            return `
+                <div class="w-full h-full rounded-lg shadow flex flex-col justify-between p-3 select-none relative overflow-hidden" style="background: linear-gradient(135deg, hsl(${baseHue}, 35%, 45%) 0%, hsl(${baseHue}, 45%, 20%) 100%);">
+                    <div class="absolute left-0 top-0 bottom-0 w-[4px] bg-yellow-400/20 shadow-inner"></div>
+                    <div class="flex justify-between items-center border-b border-yellow-400/10 pb-1 z-10">
+                        <span class="text-[9px] text-yellow-300 font-extrabold tracking-widest">${escapeHTML(labelCode)}</span>
+                        <i class="fa-solid fa-feather text-[9px] text-yellow-300/50"></i>
+                    </div>
+                    <div class="my-auto z-10 text-center px-1">
+                        <span class="text-[10px] font-bold text-white serif-title leading-snug line-clamp-3 block">${escapeHTML(title)}</span>
+                    </div>
+                    <div class="border-t border-yellow-400/10 pt-1 z-10">
+                        <span class="text-[8px] text-yellow-100/70 truncate block text-center font-medium">${escapeHTML(author)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render main Dashboard shelf UI elements
+        function renderShelfUI() {
+            const grid = document.getElementById('booksGridContainer');
+            const emptyScr = document.getElementById('emptyShelfScreen');
+            
+            // Filters data pipeline
+            const yearFiltered = books.filter(b => b.year === selectedYear);
+            
+            // Compute statistical counters based on Year Filter
+            const totalCount = yearFiltered.length;
+            const favoritesCount = yearFiltered.filter(b => b.category === "Favorite").length;
+            const completeCount = yearFiltered.filter(b => b.category === "Complete").length;
+            const inProgressCount = yearFiltered.filter(b => b.category === "In-Progress").length;
+
+            document.getElementById('statTotalCounter').innerText = totalCount;
+            document.getElementById('statFavoritesCounter').innerText = favoritesCount;
+            document.getElementById('statCompletedCounter').innerText = completeCount;
+            document.getElementById('statInProgressCounter').innerText = inProgressCount;
+
+            // Completion Achievement Sum = Complete + Favorites
+            const achievementCompletedValue = completeCount + favoritesCount;
+
+            // Fluid Progress bar math
+            const targetPercent = Math.min(100, Math.round((achievementCompletedValue / yearlyGoal) * 100)) || 0;
+            document.getElementById('progressBarFill').style.width = `${targetPercent}%`;
+            document.getElementById('progressBarPercentageLabel').innerText = `${targetPercent}%`;
+            document.getElementById('progressBarCountLabel').innerText = `Completed: ${achievementCompletedValue} of ${yearlyGoal} books`;
+
+            // Draw Achievement Medals
+            renderMedalsShelf(achievementCompletedValue);
+
+            // Execute filters on view list
+            let renderList = [...yearFiltered];
+            if (activeFilter !== "all") {
+                renderList = renderList.filter(b => b.category === activeFilter);
+            }
+
+            // Execute Search query filter
+            const searchFieldVal = document.getElementById('shelfSearchField').value.trim().toLowerCase();
+            if (searchFieldVal !== "") {
+                renderList = renderList.filter(b => 
+                    b.title.toLowerCase().includes(searchFieldVal) || 
+                    b.author.toLowerCase().includes(searchFieldVal) || 
+                    (b.notes && b.notes.toLowerCase().includes(searchFieldVal))
+                );
+            }
+
+            if (renderList.length === 0) {
+                grid.classList.add('hidden');
+                emptyScr.classList.remove('hidden');
+                return;
+            }
+
+            grid.classList.remove('hidden');
+            emptyScr.classList.add('hidden');
+            grid.innerHTML = "";
+
+            renderList.forEach(book => {
+                const card = document.createElement('div');
+                card.className = "bg-white border border-stone-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden";
+                
+                // Set badges values
+                let catClass = "bg-stone-100 text-stone-700";
+                if (book.category === "Favorite") catClass = "bg-amber-100 text-amber-800 border border-amber-200/50";
+                if (book.category === "Complete") catClass = "bg-emerald-100 text-emerald-800 border border-emerald-200/50";
+                if (book.category === "In-Progress") catClass = "bg-blue-100 text-blue-800 border border-blue-200/50";
+                if (book.category === "Paused") catClass = "bg-rose-100 text-rose-800 border border-rose-200/50";
+
+                let graphicHTML = "";
+                if (book.cover) {
+                    graphicHTML = `<img src="${book.cover}" class="w-full h-full object-cover rounded-lg shadow-sm" alt="Book cover">`;
+                } else {
+                    graphicHTML = generatePlaceholderSVG(book.title, book.author, book.category);
+                }
+
+                let starsHTML = "";
+                for (let i = 1; i <= 5; i++) {
+                    starsHTML += `<i class="fa-solid fa-star ${i <= (book.rating || 0) ? 'text-amber-400' : 'text-stone-200'} text-[10px]"></i>`;
+                }
+
+                card.innerHTML = `
+                    <div class="space-y-3.5">
+                        <div class="flex gap-3">
+                            <div class="w-20 h-28 flex-shrink-0 relative">
+                                ${graphicHTML}
+                                ${book.category === "Favorite" ? '<div class="absolute -top-1.5 -right-1.5 bg-amber-500 text-stone-900 text-[9px] w-5 h-5 rounded-full flex items-center justify-center shadow-md animate-bounce"><i class="fa-solid fa-star"></i></div>' : ''}
+                            </div>
+                            
+                            <div class="flex-grow flex flex-col justify-between min-w-0 py-0.5">
+                                <div class="space-y-1">
+                                    <span class="inline-flex items-center text-[9px] font-bold px-2 py-0.5 rounded-md ${catClass}">
+                                        ${book.category}
+                                    </span>
+                                    <h4 class="font-bold text-stone-900 serif-title text-xs leading-snug truncate group-hover:text-brand-700 transition-colors" title="${escapeHTML(book.title)}">${escapeHTML(book.title)}</h4>
+                                    <p class="text-[11px] text-stone-500 font-medium truncate" title="${escapeHTML(book.author)}">by ${escapeHTML(book.author)}</p>
+                                </div>
+                                <div class="flex items-center gap-0.5">
+                                    ${starsHTML}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-2.5 border-t border-stone-100 min-h-[44px]">
+                            <p class="text-[11px] text-stone-600 line-clamp-2 italic leading-relaxed">
+                                ${book.notes ? `"${escapeHTML(book.notes)}"` : '<span class="text-stone-400 italic">No notes captured...</span>'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
+                        <!-- AI Helper tool inside Card for individual notes summary -->
+                        <button class="ai-summary-btn text-[10px] bg-amber-500/10 text-amber-800 font-bold py-1 px-2.5 rounded-lg hover:bg-amber-500/20 transition-all flex items-center gap-1" data-id="${book.id}">
+                            <i class="fa-solid fa-wand-magic-sparkles text-[9px]"></i>
+                            <span>AI Plot Summary</span>
+                        </button>
+
+                        <div class="flex items-center gap-1.5">
+                            <button class="edit-btn text-xs text-stone-500 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 p-2 rounded-lg transition-all" data-id="${book.id}" title="Edit Log">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button class="delete-btn text-xs text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-all" data-id="${book.id}" title="Delete Log">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // Append card
+                grid.appendChild(card);
+            });
+
+            // Bind card inline button listeners dynamically (Avoid inline handlers)
+            grid.querySelectorAll('.ai-summary-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    synthesizeBookPlotSummaryAI(id);
+                });
+            });
+
+            grid.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    openEditModal(id);
+                });
+            });
+
+            grid.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    triggerDeletePrompt(id);
+                });
+            });
+        }
+
+        // Render Medals Grid Component
+        function renderMedalsShelf(completedCount) {
+            const container = document.getElementById('medalsShelfContainer');
+            container.innerHTML = "";
+
+            let activeRank = "Novice Scribe";
+            let nextMilestoneHintText = "All milestones achieved!";
+
+            ACH_MILESTONES.forEach(milestone => {
+                const isUnlocked = completedCount >= milestone.limit;
+                const card = document.createElement('div');
+                card.className = "flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-center relative group";
+
+                if (isUnlocked) {
+                    activeRank = milestone.badge;
+                    card.classList.add('bg-stone-50', 'border-amber-200/60', 'glowing-medal');
+                    card.innerHTML = `
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-tr ${milestone.bg} shadow-md flex items-center justify-center text-sm mb-1.5 transition-transform group-hover:scale-110">
+                            <i class="fa-solid ${milestone.icon}"></i>
+                        </div>
+                        <span class="text-[9px] font-bold text-stone-900 truncate max-w-full block leading-none">${milestone.title}</span>
+                        <span class="text-[7px] text-amber-600 font-extrabold uppercase mt-0.5 tracking-wider">${milestone.limit} books</span>
+                        
+                        <!-- Tooltip -->
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 bg-stone-900 text-white text-[9px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 z-10 translate-y-[-4px]">
+                            Unlocked "${milestone.badge}" Rank
+                        </div>
+                    `;
+                } else {
+                    card.classList.add('bg-stone-50/50', 'border-stone-200', 'grayscale', 'opacity-40');
+                    card.innerHTML = `
+                        <div class="w-10 h-10 rounded-full bg-stone-200 text-stone-400 flex items-center justify-center text-sm mb-1.5">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <span class="text-[9px] font-semibold text-stone-500 truncate max-w-full block leading-none">${milestone.title}</span>
+                        <span class="text-[7px] text-stone-400 mt-0.5">${milestone.limit} books</span>
+                    `;
+                }
+                container.appendChild(card);
+            });
+
+            // Calculate progress to next milestone
+        for (let i = 0; i < ACH_MILESTONES.length; i++) {
+            const milestone = ACH_MILESTONES[i];
+            if (completedCount < milestone.limit) {
+                const remaining = milestone.limit - completedCount;
+                nextMilestoneHintText = `${remaining} completed books to unlock "${milestone.title}"`;
+                break;
+            }
+        }
+
+        // Trigger victory chime if rank increases
+        const previousSavedRank = localStorage.getItem('aurabook_prior_level_badge');
+        if (previousSavedRank && previousSavedRank !== activeRank && completedCount > 0) {
+            triggerAchievementChime();
+            showSystemToast(`🎉 Rank Promoted: You are now a "${activeRank}"!`, "success");
+        }
+        localStorage.setItem('aurabook_prior_level_badge', activeRank);
+
+        document.getElementById('activeRankBadge').innerText = activeRank;
+        document.getElementById('nextMedalHint').innerText = nextMilestoneHintText;
+    }
+
+    // Export data to raw JSON
+        function exportLibraryJSON() {
+            try {
+                const state = {
+                    books,
+                    yearlyGoal,
+                    version: "AuraBook-v1"
+                };
+                const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `aurabook-reading-backup-${selectedYear}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showSystemToast("Data backup file compiled and downloaded!", "success");
+            } catch (err) {
+                showSystemToast("Could not parse file download.", "error");
+            }
+        }
+
+        // Import library data
+        function importLibraryJSON(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const parsed = JSON.parse(evt.target.result);
+                    if (parsed && Array.isArray(parsed.books)) {
+                        books = parsed.books;
+                        if (parsed.yearlyGoal) {
+                            yearlyGoal = parsed.yearlyGoal;
+                            document.getElementById('yearlyGoalInput').value = yearlyGoal;
+                        }
+                        saveShelfState();
+                        renderShelfUI();
+                        showSystemToast("Library state imported successfully!", "success");
+                    } else {
+                        throw new Error("Invalid format structure");
+                    }
+                } catch (err) {
+                    showSystemToast("Error reading file template structure.", "error");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Individual AI book summary engine using gemini-2.5-flash-preview-09-2025
+        async function synthesizeBookPlotSummaryAI(id) {
+            const targetBook = books.find(b => b.id === id);
+            if (!targetBook) return;
+
+            showSystemToast(`Asking Gemini for summary on "${targetBook.title}"...`, "info");
+            
+            const promptStr = `Provide a concise, high-impact 3-sentence plot synopsis or main theme overview for the book "${targetBook.title}" written by "${targetBook.author}". Keep it spoiler-free, and draft the text in the book's title language if non-English.`;
+            
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                const responseData = await queryGeminiAPI(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptStr }] }],
+                        systemInstruction: { parts: [{ text: "You are an elite, comforting literature scholar. Do not use complex markdown tags." }] }
+                    })
+                });
+
+                const reply = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (reply) {
+                    targetBook.notes = reply.trim();
+                    saveShelfState();
+                    renderShelfUI();
+                    showSystemToast(`AI Synopsis applied to "${targetBook.title}"!`, "success");
+                }
+            } catch (err) {
+                console.error("AI Plot call failed: ", err);
+                showSystemToast("Failed to communicate with the Gemini API.", "error");
+            }
+        }
+
+        // Dynamic Generative Reading Habits Evaluation (gemini-2.5-flash-preview-09-2025)
+        async function renderAIInsightsReport() {
+            const yearFiltered = books.filter(b => b.year === selectedYear);
+            if (yearFiltered.length === 0) {
+                showSystemToast("Please log at least one book to analyze reading trends.", "warning");
+                return;
+            }
+
+            const btnText = document.getElementById('insightsBtnText');
+            const originalHTML = btnText.innerHTML;
+            btnText.innerText = "Analyzing habits...";
+
+            // Create contextual layout
+            const formattedList = yearFiltered.map(b => `- "${b.title}" by ${b.author} [Category: ${b.category}, Rating: ${b.rating}/5, Notes: ${b.notes || ''}]`).join('\n');
+            const promptContext = `Analyze my personal logged books list for ${selectedYear} to evaluate my taste preferences, thematic trends (such as growth, drama, science fiction, philosophy), and provide exactly 5 beautiful recommended book matches with a 1-sentence sales pitch for each.\n\nReading Log:\n${formattedList}`;
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                const responseData = await queryGeminiAPI(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptContext }] }],
+                        systemInstruction: { parts: [{ text: "You are the Interactive Reading Accomplishment Tracker's lead scholar. Deliver inspiring, academic, warm personal assessments. Break down paragraphs and use clear bullets for recommendations." }] }
+                    })
+                });
+
+                const generatedReport = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (generatedReport) {
+                    activeGeneratedReportValue = generatedReport;
+                    
+                    document.getElementById('aiAnalysisBody').innerHTML = parseSimpleMarkdown(generatedReport);
+                    document.getElementById('aiAnalysisOutputContainer').classList.remove('hidden');
+                    document.getElementById('voiceSynthBtn').classList.remove('hidden');
+                    
+                    showSystemToast("AI Reading Analysis populated!", "success");
+                }
+            } catch (err) {
+                console.error("Habit Analysis failed: ", err);
+                showSystemToast("Could not load AI Insights at this moment.", "error");
+            } finally {
+                btnText.innerHTML = originalHTML;
+            }
+        }
+
+        // Text-to-Speech companion via gemini-2.5-flash-preview-tts
+        async function synthesizeReportSpeech() {
+            if (!activeGeneratedReportValue) return;
+
+            const voiceBtn = document.getElementById('voiceSynthBtn');
+            const originalHTML = voiceBtn.innerHTML;
+            voiceBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Loading speech...`;
+
+            try {
+                // Strip markdown styling tags before rendering voice audio
+                const cleanPromptText = activeGeneratedReportValue.replace(/[*_#\-]/g, '');
+                const truncatedPromptText = cleanPromptText.substring(0, 450); // Standard clip limit to maintain lightning fast performance
+
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+                const responseData = await queryGeminiAPI(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `Read with absolute warmth and intelligence: ${truncatedPromptText}` }] }],
+                        generationConfig: {
+                            responseModalities: ["AUDIO"],
+                            speechConfig: {
+                                voiceConfig: {
+                                    prebuiltVoiceConfig: {
+                                        voiceName: "Aura" // Elite resident literary voice
+                                    }
+                                }
+                            }
+                        }
+                    })
+                });
+
+                const audioBase64Bytes = responseData.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+                if (audioBase64Bytes) {
+                    playRawPCMAudio(audioBase64Bytes);
+                    showSystemToast("Aura AI speech summary playing!", "success");
+                } else {
+                    throw new Error("Empty sound payload returned");
+                }
+
+            } catch (err) {
+                console.error("Speech Synthesis failed: ", err);
+                showSystemToast("Could not synthesize companion voice audio.", "error");
+            } finally {
+                voiceBtn.innerHTML = originalHTML;
+            }
+        }
+
+        // Convert base64 PCM array buffer down to native play sound nodes
+        function playRawPCMAudio(base64Data) {
+            try {
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+
+                // Convert PCM16 array down to Float32 spectrum elements
+                const int16Buffer = new Int16Array(bytes.buffer);
+                const float32Buffer = new Float32Array(int16Buffer.length);
+                for (let i = 0; i < int16Buffer.length; i++) {
+                    float32Buffer[i] = int16Buffer[i] / 32768.0;
+                }
+
+                // Native web-context stream playback initialization
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const audioBuffer = audioCtx.createBuffer(1, float32Buffer.length, 24000); // Standard Gemini TTS sample rate output
+                audioBuffer.getChannelData(0).set(float32Buffer);
+
+                const source = audioCtx.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioCtx.destination);
+                source.start();
+
+            } catch (err) {
+                console.error("PCM decoding failed: ", err);
+            }
+        }
+
+        // Simple markdown parsing fallback compiler
+        function parseSimpleMarkdown(md) {
+            return md
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br/>');
+        }
+
+        // Custom non-blocking visual Toast notification
+        function showSystemToast(msg, level = "info") {
+            const container = document.getElementById('toastNotificationHub');
+            const toast = document.createElement('div');
+            toast.className = "px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold text-white transition-all duration-300 transform translate-y-3 opacity-0 pointer-events-auto max-w-sm";
+
+            let bg = "bg-stone-900";
+            let icon = "fa-circle-info";
+            if (level === "success") { bg = "bg-emerald-600"; icon = "fa-circle-check"; }
+            if (level === "warning") { bg = "bg-amber-600"; icon = "fa-triangle-exclamation"; }
+            if (level === "error") { bg = "bg-red-600"; icon = "fa-circle-exclamation"; }
+
+            toast.classList.add(bg);
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-sm"></i>
+                <span class="flex-grow">${escapeHTML(msg)}</span>
+            `;
+
+            container.appendChild(toast);
+            
+            // Render active
+            setTimeout(() => {
+                toast.classList.remove('translate-y-3', 'opacity-0');
+            }, 50);
+
+            // Destroy timer
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => { toast.remove(); }, 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
